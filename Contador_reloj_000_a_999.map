@@ -1,0 +1,68 @@
+MPLINK 4.49, Linker
+Linker Map File - Created Mon Mar 25 10:13:43 2019
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000000
+                   .org_1       code   0x000000    program   0x000002
+                   .org_2       code   0x000005    program   0x000120
+.config_2007_CONTADOR_RELOJ_000_A_999.O       code   0x002007    program   0x000002
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000000      
+                            0x000005    0x000094      
+                            0x002007    0x002007      
+            146 out of 1094 program addresses used, program memory utilization is 13%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+             ACTIVAR_SEGM   0x000081    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              BORRAR_CERO   0x000071    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                CODIGO_7S   0x000005    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+            COMPROBAR_CHG   0x000049    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+            CONVER_COD_7S   0x000067    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              DISPLAY_PUL   0x000073    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              DIV_DIGITOS   0x000051    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              INC_DECENAS   0x000061    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                 INC_HORA   0x000036    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                   INICIO   0x000010    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                     LOOP   0x00005b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                    LOOP2   0x000059    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              OBTENER_H_M   0x00004b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                PRINCIPAL   0x00002e    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              PROX_DIGITO   0x00006b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                 PROX_NUM   0x000065    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+               TMR0_LLENO   0x00002e    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                CODIGO_7S   0x000005    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                   INICIO   0x000010    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+               TMR0_LLENO   0x00002e    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                PRINCIPAL   0x00002e    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                 INC_HORA   0x000036    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+            COMPROBAR_CHG   0x000049    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              OBTENER_H_M   0x00004b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              DIV_DIGITOS   0x000051    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                    LOOP2   0x000059    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                     LOOP   0x00005b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              INC_DECENAS   0x000061    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+                 PROX_NUM   0x000065    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+            CONVER_COD_7S   0x000067    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              PROX_DIGITO   0x00006b    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              BORRAR_CERO   0x000071    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+              DISPLAY_PUL   0x000073    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+             ACTIVAR_SEGM   0x000081    program     static C:\Users\DIDIER JAVIER\Desktop\DIDI\Quinto Semestre\Microprocesadores y Microcontroladores\Laboratorio\Contador_reloj_000_a_999.asm
+
+

@@ -1,0 +1,672 @@
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;*************************************************************
+                      00002 ; RELOJ DE 9.99
+                      00003 ;*************************************************************
+                      00004 ; Frecuencia de reloj: 4 MHz
+                      00005 ; Instrucción: 1Mz = 1 us
+                      00006 ; Perro Guardián: OFF
+                      00007 ; Tipo de Reloj: XT
+                      00008 ; Protección de código: OFF
+                      00009 ; POR: ON
+                      00010 ;
+                      00011 ;*************************************************************
+                      00012 ; DESCRIPCIÓN DEL PROGRAMA
+                      00013 ;*************************************************************
+                      00014 ;
+                      00015 ; Este programa funciona en un PIC16F84A y se trata de un reloj/contador 
+                      00016 ; desde 0 hasta 9.99 muestra hasta 9 minutos y 99 segundos.
+                      00017 ; Dispone de dos displays LED para los minutos y otros dos para los
+                      00018 ; segundos. La decena de minuto se inhabilita, ya que no se necesita. Se puede 
+                      00019 ;modificar el programa para tener dos displays para las horas y otros dos para los minutos. 
+                      00020 ;  
+                      00021 ; DESCRIPCIÓN DEL HARDWARE
+                      00022 ;  
+                      00023 ; VISUALIZACIÓN:  
+                      00024 ;
+                      00025 ; Los minutos se muestran mediante cuatro displays de 7 segmentos de cátodo
+                      00026 ; común multiplexados. Los segmentos de cada display se unen y están
+                      00027 ; controlados a través de resistencias por salidas del PIC. Cada cátodo
+                      00028 ; común de cada display es controlado por el PIC a través de un transistor.
+                      00029 ; El reloj/contador separa los minutos y segundos por el punto de la unidad de minutos (88.88.). Los
+                      00030 ; segmentos se asignan al puerto B.
+                      00031 ; Los dos puntos se realizan en serie con una resistencia
+                      00032 ; y se conectan a RB0 y al punto de unidad de minutos y al punto de unidad de segundos.
+                      00033 ; Los segmentos de los displays, de "a" hasta "f" se asignan a las salidas
+                      00034 ; de RB1 a RB7.  
+                      00035 ; Los cuatro cátodos comunes se controlan mediante el puerto A a través de
+                      00036 ; los transistores.  
+                      00037 ; RA0 controla la decena de minuto, RA1 la unidad de minuto; RA2 la decena de
+                      00038 ; segundo y RA3 la unidad de segundo.  
+                      00039 ;*************************************************************
+                      00040 ; PINES: En proteus está el circuito con la organización de cada uno de los pines
+                      00041 ;*************************************************************
+                      00042  
+                      00043 ; PORTA, control displays 7 segmentos de cátodo común
+                      00044 ; PORTB, segmetos de los displays, led separadores.
+                      00045 
+                      00046 ;*************************************************************
+                      00047         LIST P=PIC16F84A                ; Pic a usar
+                      00048 #INCLUDE <P16F84A.INC>          ; Lista de etiquetas de microchip
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ;  MPASM PIC16F84A processor include
+                      00005 ; 
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00006 ;  (c) Copyright 1999-2013 Microchip Technology, All rights reserved
+                      00007 ;==========================================================================
+                      00008 
+                      00208         LIST
+                      00049 ;
+                      00050 ;*************************************************************
+                      00051 ; Configuración opciones de hardware para la programación
+2007   3FF1           00052                 __CONFIG    _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC       
+                      00053 ;
+                      00054 ;**************************************************************
+                      00055 ; Lista de constantes y variables para el uso del programa
+                      00056 ;**************************************************************
+                      00057 ;
+                      00058 ; Valores de constantes ***************************************
+                      00059 ;
+  0000000C            00060 FRAC_INI        equ             D'12'   ; Constante para inicio cuenta de fracciones de segundo(Ya que T
+                            MR0 funciona con ciclos de reloj)
+  0000009C            00061 SEGS_INI        equ             D'156'  ; Constante para inicio cuenta de segundos (255-156=99)
+  000000F6            00062 MINS_INI        equ             D'246'  ; Constante para inicio cuenta de minutos  (255-246=9)
+  000000F7            00063 HORS_INI        equ             D'247'  ; Constante para cuenta de horas  (Se puede modificar el program
+                            a para conteo de horas y minutos)
+  000000F6            00064 HORS_9H         equ             D'246'  ; Constante para cuenta de horas
+                      00065 ;Se tiene en cuenta los desbordamientos para reiniciar el conteo de los segundos, minutos y horas
+                      00066 ;Cuando segundos sea igual a 255: segundos - SEGS_INI = 255 - 156 = 99 que es el máximo valor de segundo
+                            s
+                      00067 ;Ya que al llegar a 256 se desborda y vuelve a tomar el valor de cero
+                      00068 ;Cuando minutos = 255: minutos - MINS_INI = 246 - 255 = 9 que es el máximo valor para minutos.
+                      00069 ; El ejercicio se puede modificar para que minutos llegue a 99
+                      00070 ; Si se requiere un conteo más lento se puede mostrar en pantalla las horas y minutos, haciendo algunas 
+                            modificaciones 
+                      00071 ;o modificar el oscilador.
+                      00072 
+  00000009            00073 ADJMIN          equ             D'9'    ; Número de "frac_sec" que se necesita sumar cada minuto
+                      00074                                                         ; para ajustar el tiempo
+  00000022            00075 ADJHOR          equ             D'34'   ; Número de "frac_sec" que se necesita restar cada hora
+                      00076                                                         ; para ajustar el tiempo
+  00000003            00077 ADJDIA          equ             D'3'    ; Número de "frac_sec" que se necesita sumar cada 12 horas
+                      00078                                                         ; para ajustar el tiempo
+                      00079 ;Ajustes
+                      00080 ; Un "frac_sec" es aproximadamente 1 / 244 s
+                      00081 ; 1 MHz / 16 = 62.500 Hz ; 62.500 Hz / 256 = 244,140625 Hz ; T = 0,004096 s
+                      00082 ; 0,004096 s * 244 = 0,999424 s; dif 1 segundo = -0,000576 s
+                      00083 ; 1 "minuto" = 0,999424 s * 60 = 59,96544 s
+                      00084 ; 60 s - 59,96544 s = 0,03456 s ; 0,03456 s / 0,004096 s = 8,4375
+                      00085 ; 1 "minutoadj" = 59,96544 s + (0,004096 s * 9) = 59,96544 s + 0,036864 s = 60,002304 s
+                      00086 ; 1 "hora" = 60,002304 s * 60 = 3600,13824 s
+                      00087 ; 3600 s - 3600,13824 s = -0,13824 s ; -0,13824 s / 0,004096 s = -33,75 s
+                      00088 ; 1 "horaadj" = 3600,13824 s - (0,004096 s * 34) = 3600,13824 s - 0,139264 s = 3599,998976 s
+                      00089 ; 12 "horas" = 3599,998976 s * 12 = 43199,987712 s
+                      00090 ; 43200 s - 43199,987712 s = 0,012288 s ; 0,012288 s /  0,004096 s = 3
+                      00091 ; 12 "horasadj" = 43199,987712 s + 0,004096 s * 3 = 43199,987712 s + 0,012288 s = 43200 s
+                      00092 ;
+  00000003            00093 CHG                     equ             H'03'   ; Indica que es necesario actualizar los valores de los 
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                            minutos (hora) que tienen 
+                      00094                                                         ; que mostrarse en los displays
+  000000FF            00095 DSPOFF          equ             B'11111111'     ; Displays apagados (PORTA)
+                      00096 ;
+                      00097 ; Mapa de activación de segmentos para los displays (PORTB)
+                      00098 ;    
+                      00099                                                         ; gfedcbap
+  0000007E            00100 CERO            equ             H'7E'   ; 01111110
+  0000000C            00101 UNO                     equ             H'0C'   ; 00001100
+  000000B6            00102 DOS                     equ             H'B6'   ; 10110110
+  0000009E            00103 TRES            equ             H'9E'   ; 10011110
+  000000CC            00104 CUATRO          equ             H'CC'   ; 11001100
+  000000DA            00105 CINCO           equ             H'DA'   ; 11011010
+  000000FA            00106 SEIS            equ             H'FA'   ; 11111010
+  0000000E            00107 SIETE           equ             H'0E'   ; 00001110
+  000000FE            00108 OCHO            equ             H'FE'   ; 11111110
+  000000DE            00109 NUEVE           equ             H'DE'   ; 11011110
+  00000000            00110 SEGM_OFF        equ             H'00'   ; Todos los segmentos apagados. Separador entre horas
+                      00111                                                         ; y minutos apagado (RB0).
+                      00112 ;
+                      00113 ; Posición de memoria de variables ************************************
+                      00114 ; Las variables de tiempo comienzan con un número que permite contar y ajustar el tiempo  
+                      00115 ; Por ejemplo la variable "segundos" se inicia con 196 decimal, para que después de 100
+                      00116 ; incrementos de 1 segundo se produzca un 0 (156 + 100 = 256 -> 0)
+  0000000C            00117 frac_sec        equ             H'0C'   ; Fracciones de segundo (1/244)
+  0000000D            00118 segundos        equ             H'0D'   ; Segundos
+  0000000E            00119 minutos         equ             H'0E'   ; Minutos  (246 + 10 = 256 -> 0)
+  0000000F            00120 horas           equ             H'0F'   ; Horas    (246 + 10 = 256 -> 0)
+  00000010            00121 conta1          equ             H'10'   ; Variable 1 para bucle contador
+                      00122 ;
+  00000011            00123 display         equ     H'11'   ; Indicador de display que debe actualizarse
+  00000012            00124 digito1         equ             H'12'   ; Display unidad de segundo (minuto) 
+  00000013            00125 digito2         equ             H'13'   ; Display decena de segundo (minuto)
+  00000014            00126 digito3         equ             H'14'   ; Display unidad de minuto   (Hora)
+  00000015            00127 digito4         equ             H'15'   ; Display decena de minuto (Hora)
+  00000016            00128 banderas        equ     H'16'   ; Banderas; 3-CHG
+                      00129 ;
+                      00130 ;**************************************************************
+0000                  00131         ORG 0x00                ;Vector de Reset
+0000   2810           00132         goto    INICIO
+0005                  00133         org     0x05            ;Salva el vector de interrupción
+                      00134 ;**************************************************************
+                      00135 ; SUBRUTINAS
+                      00136 ;**************************************************************
+0005                  00137 CODIGO_7S       ; Devuelve el código 7 segmentos
+0005   0782           00138         addwf   PCL,F
+0006   347E           00139         retlw   CERO
+0007   340C           00140         retlw   UNO
+0008   34B6           00141         retlw   DOS
+0009   349E           00142         retlw   TRES
+000A   34CC           00143         retlw   CUATRO
+000B   34DA           00144         retlw   CINCO
+000C   34FA           00145         retlw   SEIS
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+000D   340E           00146         retlw   SIETE
+000E   34FE           00147         retlw   OCHO
+000F   34DE           00148         retlw   NUEVE
+                      00149 ;**************************************************************
+                      00150 ;
+                      00151 ;
+                      00152 ;**************************************************************
+                      00153 ; Comienzo del programa
+                      00154 ;**************************************************************
+                      00155 ;
+0010                  00156 INICIO
+                      00157 ;  Configurar puertos como salidas, blanquear display
+0010   1683           00158         bsf             STATUS,RP0      ; Activa el banco de memoria 1.
+0011   3083           00159         movlw   B'10000011' ; Configuración del registro Option
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0012   0081           00160         movwf   OPTION_REG      ; TMR0 en modo temporizador (uso de pulsos de reloj internos, Fosc/4)
+                      00161                                                 ; prescaler TMR0 a 1:16 
+0013   3000           00162         movlw   B'00000000'
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0014   0085           00163         movwf   TRISA           ; Pone todas las patillas del puerto A como salidas
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0015   0086           00164         movwf   TRISB           ; Pone todas las patillas del puerto B como salidas
+0016   1283           00165         bcf             STATUS,RP0      ; Activa el banco de memoria 0.
+                      00166 ;
+                      00167 ; Establecer estados iniciales de las salidas
+0017   30FF           00168         movlw   DSPOFF
+0018   0085           00169         movwf   PORTA           ; Apaga los displays
+0019   3001           00170         movlw   B'00000001'     ; Todos los segmentos apagados. Separador 
+001A   0086           00171         movwf   PORTB           ; entre horas y minutos encendido (RB0).
+                      00172 ;
+                      00173 ; Inicialización de variables:
+001B   3001           00174         movlw   H'01';
+001C   0081           00175         movwf   TMR0            ; Pone 01h en TMR0
+001D   30FE           00176         movlw   B'11111110'     
+001E   0091           00177         movwf   display         ; Inicia display seleccionando decena de minuto
+001F   30DE           00178         movlw   NUEVE
+0020   0092           00179         movwf   digito1         ; Aparecerá un "9" en el display unidad de segundos
+0021   0093           00180         movwf   digito2         ; Aparecerá un "9" en el display decena de segundos
+0022   0094           00181         movwf   digito3         ; Aparecerá un "9" en el display unidad de minuto
+0023   0095           00182         movwf   digito4         ; Aparecerá un "9" en el display decena de minuto (Luego se queda apagad
+                            o, ya que no se necesita para el conteo)
+0024   3000           00183         movlw   B'00000000'
+0025   0096           00184         movwf   banderas        ; Coloca todas las banderas a 0
+                      00185 ;
+                      00186 ; Inicia las variables de tiempo
+0026   300C           00187         movlw   FRAC_INI    ; Valor constante de 12
+0027   008C           00188         movwf   frac_sec        ; 12
+0028   309C           00189         movlw   SEGS_INI    ; Valor constante de 156
+0029   008D           00190         movwf   segundos        ; 156
+002A   30F6           00191         movlw   MINS_INI    ; Valor constante de 246
+002B   008E           00192         movwf   minutos         ; 246 Los minutos comienzan con 0 por lo que "minutos" ha de ser 255-246
+                            =9
+002C   30F6           00193         movlw   D'246'      ; 
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+002D   008F           00194         movwf   horas           ; Se puede modificar el programa para que muestre horas y minutos
+                      00195 ;
+                      00196 ;**************************************************************
+002E                  00197 PRINCIPAL ; Rutina principal cíclica
+                      00198 ;**************************************************************
+                      00199 ;
+                      00200 ;  Esperar al desbordamiento de TMR0
+002E                  00201 TMR0_LLENO ; TMR0 Cuenta los ciclos de reloj
+                      00202 ;       4 MHz -> 1 MHz
+                      00203 ;   1.000.000 Hz / 16 = 62.500 Hz
+                      00204 ;   62.500 Hz / 256 = 244,140625 Hz -> 4,096 ms
+002E   0801           00205         movf    TMR0,W
+                      00206         
+002F   1D03           00207         btfss   STATUS,Z        ; TMR0 cuenta libremente para no perder ciclos del reloj
+                      00208                                                 ; escribiendo valores
+0030   282E           00209         goto    TMR0_LLENO
+                      00210         
+                      00211 ;
+                      00212 ; Se ha desbordado TMR0 y se han contado 256.
+                      00213 ; Tarda en desbordarse 4.096 ciclos de reloj, 4,096 ms
+0031   0F8C           00214         incfsz  frac_sec,F              ; Se añade 1 a frac_sec
+0032   2849           00215         goto    COMPROBAR_CHG   ; Si no se ha desbordado fracciones de segundo, se comprueba el estado d
+                            e “CHG” por si 
+                      00216                                                         ; es necesario actualizar los valores
+                      00217                                                         ; de la hora que tienen que mostrarse en los dis
+                            plays
+                      00218 ;
+                      00219 ; Se ha desbordado frac_sec y se han contado 244 "frac_sec", 1 segundo.
+                      00220 ; Tarda en desbordarse 4.096 ciclos de reloj, 4,096 ms * 244 = 999,424 ms
+                      00221 ; Al no consegirse exactamente 1 segundo sino 0,999424 s, luego se necesitan ajustes
+0033   1406           00222         bsf             PORTB,0         ; Se activa separador minutos segundos (horas-minutos)
+0034   300C           00223         movlw   FRAC_INI
+0035   008C           00224         movwf   frac_sec  ; Restaura la variable frac_sec para la próxima vuelta
+                      00225 ;
+                      00226                 
+0036                  00227 INC_HORA        ; Verifica si se debe Incrementar segundos, minutos y horas
+                      00228                         ; Ajustes cada minuto, hora y 12 horas
+0036   1596           00229         bsf             banderas,CHG    ; Se especifica que se ha producido un cambio en segundos, minut
+                            os u horas
+                      00230 ;                                                    o en segundos y minutos o sólo en segundos
+0037   0F8D           00231         incfsz  segundos,F              ; Como ha pasado un segundo se incrementa "segundos". Si se desb
+                            orda segundos se ignora instrucción goto
+0038   2849           00232         goto    COMPROBAR_CHG   ; Si segundos no se desborda salta
+0039   309C           00233         movlw   SEGS_INI                ; Se ha desbordado "segundos" y se reestablece el valor inicial
+003A   008D           00234         movwf   segundos                ; de "segundos" para la próxima vuelta. Debe aumentar los minuto
+                            s.
+                      00235 ;
+003B   3009           00236         movlw   ADJMIN                  ; Se resta 9 a "frac_sec" cada minuto para los ajustes de tiempo
+                             
+003C   028C           00237         subwf   frac_sec,F              ; El minuto será 9 "frac_sec" más largo
+                      00238 ;
+003D   0F8E           00239         incfsz  minutos,F               ; Se añade 1 minuto
+003E   2849           00240         goto    COMPROBAR_CHG   ; Si minutos no se desborda salta
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+003F   30F6           00241         movlw   MINS_INI                ; Se ha desbordado "minutos" y Se reestablece el valor inicial
+0040   008E           00242         movwf   minutos                 ; de "minutos" para la próxima vuelta. Se debe aumentar la hora.
+                      00243 ;
+0041   3022           00244         movlw   ADJHOR                  ; Se suma 34 a "frac_sec" cada hora para los ajustes de tiempo 
+0042   078C           00245         addwf   frac_sec,F              ; La hora será 34 "frac_sec" más corta
+                      00246 ;
+0043   0F8F           00247         incfsz  horas,F                 ; Se añade 1 hora
+0044   2849           00248         goto    COMPROBAR_CHG   ; Si horas no se desborda salta
+0045   30F7           00249         movlw   HORS_INI                        ; Se ha desbordado "horas" y se reestablece el valor ini
+                            cial
+0046   008F           00250         movwf   horas                   ; de "horas" para la próxima vuelta
+0047   3003           00251         movlw   ADJDIA                  ; Se resta 3 a "frac_sec" cada 12 horas para los ajustes de tiem
+                            po
+0048   028C           00252         subwf   frac_sec,F              ; Cada 12 horas se añadirán 3 "frac_sec"
+                      00253 ;
+                      00254 ; Se comprueba el estado de “CHG” por si 
+                      00255 ; es necesario actualizar los valores
+                      00256 ; de la hora que tienen que mostrarse en los displays
+                      00257 ; Se actualiza hora y los displays cada 4,096 ms (244 veces por segundo)
+0049                  00258 COMPROBAR_CHG   
+0049   1D96           00259         btfss   banderas,CHG    ; Si no se ha cambiado la hora
+004A   2873           00260         goto    DISPLAY_PUL             ; se salta a DISPLAY_PUL, que principalmente refresca uno de los
+                      00261                                                         ; displays cada vez que se accede a ella.
+                      00262 ;
+                      00263         
+004B                  00264 OBTENER_H_M;/////////////////////////////////////////////////////////////////////////////////
+004B   30F6           00265     movlw       MINS_INI  ; MINS_INI = d246. Se transfiere a W el valor de MINS_INI
+004C   020E           00266     subwf       minutos,W ; W = d246. minutos - W. El valor de minutos va de 246 a 255
+004D   0094           00267     movwf       digito3     ; La variable digito3 almacena temporalmente el valor para los minutos. (Ent
+                            re 0 y 9)
+004E   309C           00268     movlw       SEGS_INI    ; SEGS_INI = d146
+004F   020D           00269         subwf   segundos,W  ; Segundos va cambiando entre 146 y 255
+0050   0092           00270         movwf   digito1                 ; Se guarda temporalmente el número de segundos en “digito1”. (E
+                            ntre 0 y 99)
+                      00271 ;
+0051                  00272 DIV_DIGITOS             ; Divide los segundos o los minutos y las horas en dígitos independientes
+                      00273                                 ; ejemplo, [14] lo pasa a [1]-[4]
+0051   3000           00274         movlw   H'00'
+0052   0095           00275         movwf   digito4         ; Se ponen a cero las posiciones de las decenas
+0053   0093           00276         movwf   digito2         ; para el caso de que no se incrementen
+0054   3002           00277         movlw   H'02'
+0055   0090           00278         movwf   conta1          ; Bucle para convertir cada número (segundos o minutos y horas)
+0056   3012           00279         movlw   digito1         ; Se recupera el valor de los segundos guardados en digito1
+0057   0084           00280         movwf   FSR                     ; La primera vez, FSR = digito1 (segundos) y la segunda vez FSR 
+                            = digito3 (minutos)
+0058   285B           00281         goto    LOOP            
+                      00282 ;
+0059                  00283 LOOP2   ; Este LOOP se utiliza para los minutos 
+0059   3014           00284         movlw   digito3
+005A   0084           00285         movwf   FSR                     
+                      00286 ;
+005B                  00287 LOOP    ; Este LOOP se utiliza primero para los segundos y después para los minutos
+005B   300A           00288         movlw   D'10'                   ; Averiguar cuantas "decenas" hay en el número
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+005C   0280           00289         subwf   INDF,F                  ; En cada LOOP restar 10 al número
+005D   1803           00290         btfsc   STATUS,C        ; Se comprueba "C", que se pone a 1 si en la resta no se ha
+                      00291                                                         ; producido llevada
+005E   2861           00292         goto    INC_DECENAS     ; C = 1 por lo que se añade 1 a la posición de las decenas
+005F   0780           00293         addwf   INDF,F                  ; C = 0, no se incrementan las decenas y se suma 10 para restaur
+                            ar
+                      00294                                                         ; las unidades
+0060   2865           00295         goto    PROX_NUM
+                      00296 ;
+0061                  00297 INC_DECENAS
+0061   0A84           00298         incf    FSR,F           ; El puntero apunta a la primera posición de las decenas
+0062   0A80           00299         incf    INDF,F          ; Se añade 1 a las decenas
+0063   0384           00300         decf    FSR,F           ; Se restaura el valor de INDF para apuntar al número
+0064   285B           00301         goto    LOOP            ; para la próxima resta hasta que se termine
+                      00302                                                 ; Con "goto LOOP" se vuelve a comprobar si es necesario
+                      00303                                                 ; sumar uno a la decena cada vez que esta se ha incremen
+                            tado
+                      00304 ;
+0065                  00305 PROX_NUM        ; Próximo número, primero ha sido segundos y luego minutos
+0065   0B90           00306         decfsz  conta1,F
+0066   2859           00307         goto    LOOP2
+                      00308 ;
+0067                  00309 CONVER_COD_7S   ; Convierte cada dígito a código 7 segmentos para los displays
+0067   3012           00310         movlw   digito1 
+0068   0084           00311         movwf   FSR             ; Coloca la dirección del primer digito (digito1) en FSR
+0069   3004           00312         movlw   H'04'
+006A   0090           00313         movwf   conta1  ; Prepara la variable conta1 para el bucle de los 4 displays
+                      00314 ;
+006B                  00315 PROX_DIGITO
+006B   0800           00316         movf    INDF,W          ; Obtener el valor de la variable "digito" actual
+006C   2005           00317         call    CODIGO_7S       ; LLamar a la rutina de conversión a código 7 segmentos
+006D   0080           00318         movwf   INDF            ; Colocar en la variable "digito" el código 7 segmentos devuelto
+006E   0A84           00319         incf    FSR,F           ; Incremente INDF para el próximo "digito"
+006F   0B90           00320         decfsz  conta1,F        ; Permitir que conta1 de sólo 4 vueltas
+0070   286B           00321         goto    PROX_DIGITO
+                      00322 ;
+0071                  00323 BORRAR_CERO             ; Como el  el display de las decenas de minuto (hora) no se requiere
+                      00324                                 ; no se muestra (borrado de los ceros a la izquierda)
+0071   3000           00325         movlw   SEGM_OFF
+0072   0095           00326         movwf   digito4
+                      00327 
+                      00328 ;
+0073                  00329 DISPLAY_PUL             ; Se borran los bits de flag para actualizar su estado
+                      00330                                 ; Muestra los dígitos correspondientes a los segundos o a
+                      00331                                 ; los minutos y horas en el display que corresponda.
+                      00332 ;
+0073   3000           00333         movlw   B'00000000'
+0074   0096           00334         movwf   banderas        ; Se borran los bits de flag para actualizar su estado
+                      00335 ;
+                      00336         ; Apagar los displays
+0075   30FF           00337         movlw   DSPOFF
+0076   0085           00338         movwf   PORTA           
+                      00339 ;
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00340         ; Apagar los segmentos respetando separador -minutos-segundos
+0077   3000           00341         movlw   SEGM_OFF        ; Respeta valor RB0
+0078   0606           00342         xorwf   PORTB, w
+0079   39FE           00343         andlw   B'11111110'     ;  Poner "1" en la posición del bit a copiar
+007A   0686           00344         xorwf   PORTB, f
+                      00345 ;
+007B   0000           00346         nop             ; Las instrucciones "nop" pueden no ser necesarias.
+007C   0000           00347         nop             ; En principio proporcionan el tiempo suficiente para que los
+007D   0000           00348         nop             ; estados anteriores de las salidas se actualicen 
+007E   0000           00349         nop             ; 
+007F   0000           00350         nop             ; 
+0080   0000           00351         nop
+                      00352 
+                      00353 ;
+0081                  00354 ACTIVAR_SEGM    ; Se coloca en PORTB el valor para los segmentos del display actual
+                      00355 
+                      00356         ; Se determina que display debe actualizarse, es decir, que dato debe
+                      00357         ; presentarse en el puerto B y se establece el siguiente display
+0081   1C11           00358         btfss   display,0       ; Si es el primer display (decena de minuto) tomar digito4
+0082   0815           00359         movf    digito4,W
+0083   1C91           00360         btfss   display,1       ; Si es el segundo display (unidad de minuto) tomar valor digito3
+0084   0814           00361         movf    digito3,W
+0085   1D11           00362         btfss   display,2       ; Si es el tercer display (decena de seg) tomar valor digito2
+0086   0813           00363         movf    digito2,W
+0087   1D91           00364         btfss   display,3       ; Si es el cuarto display (unidad de seg) tomar valor digito1
+0088   0812           00365         movf    digito1,W
+                      00366 ;
+                      00367         ; Entregar el valor en puerto B y respetar valor RB0
+0089   0606           00368         xorwf   PORTB, w
+008A   39FE           00369         andlw   B'11111110'     ;  Poner "1" el la posición del bit a copiar
+008B   0686           00370         xorwf   PORTB, f
+                      00371 ;
+008C   1B8C           00372         btfsc   frac_sec,7      ; Establecer el separador de minutos y segundos a un 50% 
+008D   1006           00373         bcf             PORTB,0         ; del ciclo (1/2 segundo encendido, 1/2 segundo apagado)
+                      00374 ;
+008E   0811           00375         movf    display,W       ; Tomar el valor del display que debe habilitarse
+008F   0085           00376         movwf   PORTA           ; Cada display se “enciende” con una cadencia de 244 Hz / 4 = 61 Hz   
+                      00377                 ; En este momento están encendidos los segmentos correspondientes
+                      00378 ;
+0090   0D91           00379         rlf             display,F       ; Rota display 1 bit a la próxima posición
+0091   1411           00380         bsf             display,0       ; Asegura un 1 en la posición más baja de display (luego se hará
+                             0 si es necesario)
+0092   1E11           00381         btfss   display,4       ; Comprueba si el último display fue actualizado
+0093   1011           00382         bcf             display,0       ; Si lo fue, se vuelve a habilitar el primer display
+                      00383                                                 ; La variable display va cambiando:
+                      00384                                                 ;       1111 1101
+                      00385                                                 ;       1111 1011
+                      00386                                                 ;       1111 0111
+                      00387                                                 ;       1110 1110
+                      00388                                                 ;       1101 1101
+                      00389                                                 ;       1011 1011
+                      00390                                                 ;       0111 0111
+                      00391                                                 ;       1110 1110
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00392                                                 ; Sólo valen los 4 bits menos significativos
+                      00393 
+                      00394         
+                      00395 ;
+0094   282E           00396         goto    PRINCIPAL       ; Volver a realizar todo el proceso
+                      00397 ;
+                      00398     END
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ACTIVAR_SEGM                      00000081
+ADJDIA                            00000003
+ADJHOR                            00000022
+ADJMIN                            00000009
+BORRAR_CERO                       00000071
+C                                 00000000
+CERO                              0000007E
+CHG                               00000003
+CINCO                             000000DA
+CODIGO_7S                         00000005
+COMPROBAR_CHG                     00000049
+CONVER_COD_7S                     00000067
+CUATRO                            000000CC
+DC                                00000001
+DISPLAY_PUL                       00000073
+DIV_DIGITOS                       00000051
+DOS                               000000B6
+DSPOFF                            000000FF
+EEADR                             00000009
+EECON1                            00000088
+EECON2                            00000089
+EEDATA                            00000008
+EEIE                              00000006
+EEIF                              00000004
+F                                 00000001
+FRAC_INI                          0000000C
+FSR                               00000004
+GIE                               00000007
+HORS_9H                           000000F6
+HORS_INI                          000000F7
+INC_DECENAS                       00000061
+INC_HORA                          00000036
+INDF                              00000000
+INICIO                            00000010
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IRP                               00000007
+LOOP                              0000005B
+LOOP2                             00000059
+MINS_INI                          000000F6
+NOT_PD                            00000003
+NOT_RBPU                          00000007
+NOT_TO                            00000004
+NUEVE                             000000DE
+OBTENER_H_M                       0000004B
+OCHO                              000000FE
+OPTION_REG                        00000081
+PCL                               00000002
+PCLATH                            0000000A
+PORTA                             00000005
+PORTB                             00000006
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PRINCIPAL                         0000002E
+PROX_DIGITO                       0000006B
+PROX_NUM                          00000065
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RD                                00000000
+RP0                               00000005
+RP1                               00000006
+SEGM_OFF                          00000000
+SEGS_INI                          0000009C
+SEIS                              000000FA
+SIETE                             0000000E
+STATUS                            00000003
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0_LLENO                        0000002E
+TRES                              0000009E
+TRISA                             00000085
+TRISA0                            00000000
+TRISA1                            00000001
+TRISA2                            00000002
+TRISA3                            00000003
+TRISA4                            00000004
+TRISB                             00000086
+TRISB0                            00000000
+TRISB1                            00000001
+TRISB2                            00000002
+TRISB3                            00000003
+TRISB4                            00000004
+TRISB5                            00000005
+TRISB6                            00000006
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TRISB7                            00000007
+UNO                               0000000C
+W                                 00000000
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+Z                                 00000002
+_CONFIG                           00002007
+_CP_OFF                           00003FFF
+_CP_ON                            0000000F
+_DEVID1                           00002006
+_FOSC_EXTRC                       00003FFF
+_FOSC_HS                          00003FFE
+_FOSC_LP                          00003FFC
+_FOSC_XT                          00003FFD
+_HS_OSC                           00003FFE
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_LP_OSC                           00003FFC
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FF7
+_RC_OSC                           00003FFF
+_WDTE_OFF                         00003FFB
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FFB
+_WDT_ON                           00003FFF
+_XT_OSC                           00003FFD
+__16F84A                          00000001
+banderas                          00000016
+conta1                            00000010
+digito1                           00000012
+digito2                           00000013
+digito3                           00000014
+digito4                           00000015
+display                           00000011
+frac_sec                          0000000C
+horas                             0000000F
+minutos                           0000000E
+segundos                          0000000D
+MPASM  5.51      CONTADOR_RELOJ_000_A_999.ASM   3-25-2019  10:13:41         PAGE 13
+
+
+MEMORY USAGE MAP ('X' = Used,  '-' = Unused)
+
+
+0000 : X----XXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0040 : XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXX
+0080 : XXXXXXXXXXXXXXXX XXXXX----------- ---------------- ----------------
+2000 : -------X-------- ---------------- ---------------- ----------------
+
+All other memory blocks unused.
+
+Program Memory Words Used:   145
+Program Memory Words Free:   879
+
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     3 reported,     0 suppressed
+
+
